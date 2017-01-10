@@ -1,0 +1,29 @@
+{
+  "name": "battleshipnode",
+  "version": "0.1.1",
+  "description": "A battleship game in node.js",
+  "engines": {
+    "node": "6.6.0",
+    "npm": "3.10.3"
+  },
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "ejs": "*",
+    "express": "*",
+    "socket.io": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tdiede/battleshipnode.git"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express",
+    "socket.io"
+  ],
+  "author": "Therese Diede"
+}

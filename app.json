@@ -1,0 +1,8 @@
+{
+  "name": "battleshipnode",
+  "description": "A battleship game in node.js",
+  "repository": "https://github.com/tdiede/battleshipnode",
+  "logo": "",
+  "keywords": ["node", "express", "static"],
+  "image": ""
+}

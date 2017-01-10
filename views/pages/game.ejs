@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+</head>
+<body>
+
+<% include ../partials/nav.ejs %>
+
+<div class="container">
+
+  <div class="row" id="pre-game">
+    <input type="text" id="username" placeholder="username">
+    <button id="start-game">start new game</button>
+  </div>
+
+  <div class="row" id="setup-game">
+    <h2>Current Game</h2>
+
+    <div class="col-md-8">
+        
+        <img class="avatar" src="your-avatar.png" />
+        <h6>YOUR FLEET [ <span id="you"></span> ]</h6>
+        <canvas id="your-grid" class="grid" ></canvas>
+    </div>
+
+    <div class="col-md-4">
+
+        <h2>Ships</h2>
+        <button id="place-ships">place your ships</button>
+        <div id="ship-container">
+            <hr>
+            <p>Click on each ship to place on grid: </p>
+            <div id="ship-object">
+
+            </div>
+        </div>
+
+    </div>
+  </div>
+
+  <div class="row" id="play-game">
+    <div class="col-md-8">
+        <img class="avatar" src="opponent-avatar.png" />
+        <h6>OPPONENT FLEET</h6>
+        <canvas id="opponent-grid" class="grid" ></canvas>
+    </div>
+  </div>
+
+
+  </div>
+</div>
+
+<footer>
+<p id='time-stamp'></p>
+</footer>
+
+<script type="text/javascript">
+"use strict";
+
+const HEIGHT = 600;
+const WIDTH = 600;
+const GRID = 10;
+const cellDim = HEIGHT / GRID;
+
+$().ready(function() {
+
+    var socket = io.connect();
+    var playerGrid = $("#your-grid");
+    var opponentGrid = $("#opponent-grid");
+
+    $("#play-game").hide();
+    $("#setup-game").hide();
+    $("#ship-container").hide();
+
+    socket.on('time', function(timeString) {
+        $('#time-stamp').html('current time: ' + timeString);
+    });
+    socket.on('waiting', function() {
+        console.log("Waiting for a second player to join...");
+    });
+    socket.on('alert', function() {
+        console.log("Playing!");
+    });
+
+    $("#start-game").on('click', function() {
+        $("#pre-game").hide();
+        $("#setup-game").show();
+        $("#play-game").show();
+        $("#you").html($("#username").val());
+        socket.emit('newgame', {
+            username: $("#username").val()
+        });
+        drawGrid(playerGrid);
+        drawGrid(opponentGrid);
+    });
+
+    $("#place-ships").on('click', function() {
+        socket.emit('setup');
+        $("#ship-container").show();
+    });
+    
+    socket.on('refresh', function(data) {
+        $("#ship-object").html(data);
+    });
+
+    $("body").on('click', ".ship-image", function() {
+        let code = this.id;
+        console.log(this.id);
+        let x = prompt("Please enter column coordinate: ", "1-10");
+        x = x - 1;
+        let y = prompt("Please enter row coordinate: ", "A-J");
+        y = y.toUpperCase();
+        y = y.charCodeAt(0) - 65;
+        let d = prompt("Please enter a direction: ", "right or down");
+        drawShip(playerGrid,x,y,d,code.length);
+        socket.emit('place', {
+            ship: code,
+            column: x,
+            row: y,
+            direction: d
+        });
+    });
+
+});
+
+
+
+
+
+// draws battleship grid
+function drawGrid(playerGrid) {
+    let ctx = playerGrid[0].getContext('2d');
+    ctx.canvas.height = HEIGHT;
+    ctx.canvas.width = WIDTH;
+
+    ctx.strokeStyle="#03AFCA";
+    ctx.lineWidth=0.5;
+
+    for (let i = 0; i <= HEIGHT; i += cellDim) {
+        ctx.beginPath();
+        ctx.moveTo(i,0);
+        ctx.lineTo(i,HEIGHT);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0,i);
+        ctx.lineTo(WIDTH,i);
+        ctx.stroke();
+    }
+}
+
+// draws ship on grid
+function drawShip(playerGrid,x,y,d,l) {
+    let ctx = playerGrid[0].getContext('2d');
+    let width = cellDim;
+    let height = cellDim;
+    if (d === "right") {
+        width = l*cellDim;
+    } else if (d === "down") {
+        height = l*cellDim;
+    }
+    ctx.fillStyle="rgba(30,200,30,0.2)";
+    ctx.fillRect(x*cellDim,y*cellDim,width,height);
+}
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <% include ../partials/header.ejs %>
+</head>
+
+<body>
+
+  <% include ../partials/nav.ejs %>
+
+<div class="jumbotron text-center">
+  <div class="container">
+    <a href="/">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Battleship_clipart.svg/640px-Battleship_clipart.svg.png">
+    </a>
+    <h1>Let's play battleship!</h1>
+    <p>This is a basic implementation of the classic <a href="https://en.wikipedia.org/wiki/Battleship_(game)" class="alert-link">battleship</a> game.</p>
+    <a type="button" class="btn btn-lg btn-primary" href="https://github.com/tdiede/battleshipnode">Source on GitHub</a>
+  </div>
+</div>
+<div class="container">
+  <div class="alert alert-info text-center" role="alert">
+    To start a new <a href="/game" class="alert-link">game</a> don't be shy.
+  </div>
+  <hr>
+  <div class="row">
+    <div class="col-md-6">
+      <h3>How this app works</h3>
+      <ul>
+        <li>This app was deployed to Heroku, using a <a href="https://github.com/tdiede/battleshipnode">GitHub repository</a>.</li>
+        <li>When Heroku received the source code, it fetched all the dependencies in the <a href="https://github.com/tdiede/battleshipnode/blob/master/package.json">package.json</a>, creating a deployable slug.</li>
+        <li>The platform then spins up a dyno, a lightweight container that provides an isolated environment in which the slug can be mounted and executed.</li>
+        <li>The app scales and can benefit from a variety of add-on services, such as databases.</li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h3>What it looks like</h3>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>
