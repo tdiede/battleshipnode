@@ -12,7 +12,19 @@
 <div class="container">
 
   <div class="row" id="pre-game">
-    <input type="text" id="username" placeholder="username">
+    Choose your avatar:
+    <img class="avatar" src='avatars_0001.png' />
+    <img class="avatar" src='avatars_0002.png' />
+    <img class="avatar" src='avatars_0003.png' />
+    <img class="avatar" src='avatars_0004.png' />
+    <img class="avatar" src='avatars_0005.png' />
+    <hr>
+    Enter your username:
+    <input type="text" class="autocomplete" id="username" placeholder="username">
+    <hr>
+    <img class="avatar" id="empty-avatar" src='' />
+    <h6>YOUR FLEET [ <span id="empty-you"></span> ]</h6>
+    <hr>
     <button id="start-game">start new game</button>
   </div>
 
@@ -21,7 +33,7 @@
 
     <div class="col-md-8">
         
-        <img class="avatar" src="your-avatar.png" />
+        <img class="avatar" id="player-avatar" src='' />
         <h6>YOUR FLEET [ <span id="you"></span> ]</h6>
         <canvas id="your-grid" class="grid" ></canvas>
     </div>
@@ -43,9 +55,9 @@
 
   <div class="row" id="play-game">
     <div class="col-md-8">
-        <img class="avatar" src="opponent-avatar.png" />
-        <h6>OPPONENT FLEET</h6>
-        <canvas id="opponent-grid" class="grid" ></canvas>
+        <img class="avatar" id="enemy-avatar" src='' />
+        <h6>ENEMY FLEET [ <span id="enemy"></span> ]</h6>
+        <canvas id="enemy-grid" class="grid" ></canvas>
     </div>
   </div>
 
@@ -60,6 +72,7 @@
 <script type="text/javascript">
 "use strict";
 
+
 const HEIGHT = 600;
 const WIDTH = 600;
 const GRID = 10;
@@ -69,7 +82,7 @@ $().ready(function() {
 
     var socket = io.connect();
     var playerGrid = $("#your-grid");
-    var opponentGrid = $("#opponent-grid");
+    var enemyGrid = $("#enemy-grid");
 
     $("#play-game").hide();
     $("#setup-game").hide();
@@ -78,25 +91,53 @@ $().ready(function() {
     socket.on('time', function(timeString) {
         $('#time-stamp').html('current time: ' + timeString);
     });
-    socket.on('waiting', function() {
-        console.log("Waiting for a second player to join...");
-    });
-    socket.on('alert', function() {
-        console.log("Playing!");
-    });
 
+    // starting new game
+    $(".autocomplete").on('change', function() {
+        let text = this.value;
+        $("#empty-you").html(text);
+    });
+    $(".avatar").on('click', function() {
+        let src = this.src;
+        $("#empty-avatar").attr('src', src);
+    });
     $("#start-game").on('click', function() {
         $("#pre-game").hide();
         $("#setup-game").show();
         $("#play-game").show();
-        $("#you").html($("#username").val());
-        socket.emit('newgame', {
-            username: $("#username").val()
-        });
-        drawGrid(playerGrid);
-        drawGrid(opponentGrid);
+        let userProfile = {
+            username: $("#username").val(),
+            avatar: $("#empty-avatar").attr('src')
+        };
+        socket.emit('newgame', userProfile);
     });
 
+    // plaers are initialized, game is started
+    const PLAYERS = {};
+    socket.on('waiting', function(data) {
+        PLAYERS['you'] = data['0'];
+        console.log("Waiting for a second player to join...");
+    });
+    socket.on('alert', function(data) {
+        if(PLAYERS['you']) {
+            PLAYERS['enemy'] = data['1'];          
+        } else {
+            PLAYERS['you'] = data['1'];
+            PLAYERS['enemy'] = data['0'];
+        }
+
+        console.log(PLAYERS);
+        drawProfiles(PLAYERS);
+        // drawGrid(playerGrid);
+        // drawGrid(enemyGrid);  
+
+        console.log("Playing!");
+
+        console.log(socket.id + 'socket');
+    });
+
+
+    // users place ships on grid
     $("#place-ships").on('click', function() {
         socket.emit('setup');
         $("#ship-container").show();
@@ -128,7 +169,14 @@ $().ready(function() {
 
 
 
+// draws user profile
+function drawProfiles(userProfiles) {
+    $("#you").html(userProfiles['you'].username);
+    $("#player-avatar").attr('src',userProfiles['you'].avatar);
+    $("#enemy").html(userProfiles['enemy'].username);
+    $("#enemy-avatar").attr('src',userProfiles['enemy'].avatar);
 
+}
 
 // draws battleship grid
 function drawGrid(playerGrid) {

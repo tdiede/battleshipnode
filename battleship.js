@@ -152,23 +152,42 @@ class Grid {
 
 };
 
+class Player {
+    constructor(id,socket,username,avatar) {
+        this.id = id;
+        this.socket = socket;
+        this.username = username;
+        this.avatar = avatar;
+    }
+    initData() {
+        return {
+            id: this.id,
+            username: this.username,
+            avatar: this.avatar
+        };
+    }
+}
+
+
 class Game {
     constructor(numPlayers) {
-        this.numPlayers = numPlayers;
-        this.players = {};
+        this.numPlayers = 2;
+        this.grids = {};
     }
-
-    startGame() {
-        for (var playerNumber = 0; playerNumber < this.numPlayers; playerNumber++) {
+    startGame(players) {
+        for (var key in players) {
+            let playerNumber = players[key].id;
             let grid = new Grid(playerNumber=playerNumber);
-            this.players[playerNumber] = grid;
             grid.setupGrid();
+            this.grids[players[key].socket] = grid;
         }
     }
 }
 
-// EXPORTS class Game
-module.exports = Game;
+
+// EXPORTS class Game and class Player
+module.exports = {game:Game,player:Player};
+
 
 
 

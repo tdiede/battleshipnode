@@ -6,6 +6,7 @@ const express = require('express'),
 
 const SOCKETS = {};
 const PLAYERS = {};
+PLAYERS['waiting'] = {};
 
 const SHIPS = { "A": {code: "AAAAA", name: "carrier", length: 5, count: 1},
                 "B": {code: "BBBB", name: "battleship", length: 4, count: 1},
@@ -13,8 +14,8 @@ const SHIPS = { "A": {code: "AAAAA", name: "carrier", length: 5, count: 1},
                 "D": {code: "DD", name: "destroyer", length: 2, count: 1},
                 "S": {code: "S", name: "submarine", length: 1, count: 1} };
 
-const Game = require('./battleship.js');
-const numPlayers = 2;
+const Game = require('./battleship.js').game;
+const Player = require('./battleship.js').player;
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -40,13 +41,12 @@ server.listen(app.get('port'), function() {
     console.log('Node app is running on port', app.get('port'));
 });
 
+
 // handle socket connections
 io.on('connection', function(socket) {
     console.log('Socket Connected...');
-    assignSocket(socket);
 
-    const game = new Game(numPlayers);
-    game.startGame();
+    assignSocket(socket);
 
     socket.on('disconnect', function() {
         console.log('Socket ' + socket.id + ' Disconnected...');
@@ -55,19 +55,26 @@ io.on('connection', function(socket) {
     });
 
     socket.on('newgame', function(data) {
-        let playerCount = Object.keys(PLAYERS).length;
-        PLAYERS[socket.id] = {
-            userid: playerCount,
-            username: data.username};
+        const game = new Game();
+        player = initializePlayer(socket,data.username,data.avatar);
+
+        PLAYERS['waiting'][player.id] = player;
+        console.log(PLAYERS);
+
+        let playerCount = Object.keys(PLAYERS['waiting']).length;
         if (playerCount === 1) {
-            io.emit('waiting');
+            io.emit('waiting', PLAYERS['waiting']);
         } else if (playerCount === 2) {
-            io.emit('alert');
+            game.startGame(PLAYERS['waiting']);
+            PLAYERS['playing'] = PLAYERS['waiting'];
+            io.emit('alert', PLAYERS['playing']);
+            PLAYERS['waiting'] = {};
+            console.log(PLAYERS);
         }
     });
 
     socket.on('setup', function() {
-        let playerID = PLAYERS[socket.id].userid;
+        // let playerID = PLAYERS[socket.id].userid;
         var html = '';
         for (let key in SHIPS) {
             if (!('key' in game.players[playerID].playerShips)) {
@@ -79,7 +86,7 @@ io.on('connection', function(socket) {
 
     socket.on('place', function(data) {
         let playerID = PLAYERS[socket.id].userid;
-        game.players[playerID].placeShip(data.ship,data.column,data.row,data.direction);
+        game.grids[playerID].placeShip(data.ship,data.column,data.row,data.direction);
         console.log("Placing ship: " + data.ship, data.row, data.column, data.direction);
     });
 
@@ -93,10 +100,13 @@ setInterval(() => io.emit('time', new Date().toTimeString()), 1000);
 function assignSocket(socket) {
     socket.id = Math.random();
     SOCKETS[socket.id] = socket;
-    console.log(socket.id);
 }
 
-
+function initializePlayer(socket,username,avatar) {
+    let id = Object.keys(PLAYERS['waiting']).length;
+    let player = new Player(id,socket.id,username,avatar);
+    return player;
+}
 
 
 
@@ -112,3 +122,7 @@ function assignSocket(socket) {
 //     ctx.lineTo(50 + textMeasure.width, 102);
 //     ctx.stroke();
 // }
+
+
+// TODO: user authentication, ideally into database
+
