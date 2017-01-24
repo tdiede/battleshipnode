@@ -54,6 +54,7 @@ io.on('connection', function(socket) {
         io.emit('gameover');
     });
 
+    // starting a new game
     socket.on('newgame', function(data) {
         const game = new Game();
         player = initializePlayer(socket,data.username,data.avatar);
@@ -65,29 +66,26 @@ io.on('connection', function(socket) {
         if (playerCount === 1) {
             io.emit('waiting', PLAYERS['waiting']);
         } else if (playerCount === 2) {
-            game.startGame(PLAYERS['waiting']);
+            game.initializeGame(PLAYERS['waiting']);
             PLAYERS['playing'] = PLAYERS['waiting'];
             io.emit('alert', PLAYERS['playing']);
             PLAYERS['waiting'] = {};
             console.log(PLAYERS);
         }
+
+        console.log(game);
+        setupShips({});
     });
 
-    socket.on('setup', function() {
-        // let playerID = PLAYERS[socket.id].userid;
-        var html = '';
-        for (let key in SHIPS) {
-            if (!('key' in game.players[playerID].playerShips)) {
-                html += '<img class="ship-image" id="'+SHIPS[key].code+'" src="/'+SHIPS[key].name+'-'+SHIPS[key].length+'.png" /><p>'+SHIPS[key].name.toUpperCase()+': '+SHIPS[key].length+'</p>';
-            }
-        }
-        io.emit('refresh', html);
-    });
+    // // players place ships
+    // socket.on('setup', function() {
+    //     if (!('key' in game.players[playerID].playerShips)) {}
+    // });
 
     socket.on('place', function(data) {
-        let playerID = PLAYERS[socket.id].userid;
-        game.grids[playerID].placeShip(data.ship,data.column,data.row,data.direction);
+        game.grids[id].placeShip(data.ship,data.column,data.row,data.direction);
         console.log("Placing ship: " + data.ship, data.row, data.column, data.direction);
+        setupShips(game.grids[id].playerShips);
     });
 
 });
@@ -107,6 +105,16 @@ function initializePlayer(socket,username,avatar) {
     let player = new Player(id,socket.id,username,avatar);
     return player;
 }
+
+function setupShips(playerShips) {
+    var html = '';
+    for (let key in SHIPS) {
+        if (!(SHIPS[key] in playerShips))
+            html += '<img class="ship-image" id="'+SHIPS[key].code+'" src="/'+SHIPS[key].name+'-'+SHIPS[key].length+'.png" /><p>'+SHIPS[key].name.toUpperCase()+': '+SHIPS[key].length+'</p>';
+    }
+    io.emit('ships', html);
+}
+
 
 
 

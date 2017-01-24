@@ -33,8 +33,8 @@ class Ship {
 }
 
 class Grid {
-    constructor(playerNumber) {
-        this.playerNumber = playerNumber;
+    constructor(player) {
+        this.player = player;
         this.matrix = [];
         this.playerShips = {};
         this.sunk = 0;
@@ -174,12 +174,12 @@ class Game {
         this.numPlayers = 2;
         this.grids = {};
     }
-    startGame(players) {
+    initializeGame(players) {
         for (var key in players) {
-            let playerNumber = players[key].id;
-            let grid = new Grid(playerNumber=playerNumber);
+            let player = players[key];
+            let grid = new Grid(player=player);
             grid.setupGrid();
-            this.grids[players[key].socket] = grid;
+            this.grids[players[key].id] = grid;
         }
     }
 }

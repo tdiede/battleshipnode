@@ -45,9 +45,7 @@
         <div id="ship-container">
             <hr>
             <p>Click on each ship to place on grid: </p>
-            <div id="ship-object">
-
-            </div>
+            <div id="ship-object"></div>
         </div>
 
     </div>
@@ -84,9 +82,8 @@ $().ready(function() {
     var playerGrid = $("#your-grid");
     var enemyGrid = $("#enemy-grid");
 
-    $("#play-game").hide();
     $("#setup-game").hide();
-    $("#ship-container").hide();
+    $("#play-game").hide();
 
     socket.on('time', function(timeString) {
         $('#time-stamp').html('current time: ' + timeString);
@@ -104,7 +101,6 @@ $().ready(function() {
     $("#start-game").on('click', function() {
         $("#pre-game").hide();
         $("#setup-game").show();
-        $("#play-game").show();
         let userProfile = {
             username: $("#username").val(),
             avatar: $("#empty-avatar").attr('src')
@@ -112,7 +108,7 @@ $().ready(function() {
         socket.emit('newgame', userProfile);
     });
 
-    // plaers are initialized, game is started
+    // players are initialized, game is started
     const PLAYERS = {};
     socket.on('waiting', function(data) {
         PLAYERS['you'] = data['0'];
@@ -125,28 +121,18 @@ $().ready(function() {
             PLAYERS['you'] = data['1'];
             PLAYERS['enemy'] = data['0'];
         }
-
         console.log(PLAYERS);
-        drawProfiles(PLAYERS);
-        // drawGrid(playerGrid);
-        // drawGrid(enemyGrid);  
-
         console.log("Playing!");
-
-        console.log(socket.id + 'socket');
+        drawProfiles(PLAYERS);
+        drawGrid(playerGrid);
     });
 
 
     // users place ships on grid
-    $("#place-ships").on('click', function() {
-        socket.emit('setup');
-        $("#ship-container").show();
-    });
-    
-    socket.on('refresh', function(data) {
+
+    socket.on('ships', function(data) {
         $("#ship-object").html(data);
     });
-
     $("body").on('click', ".ship-image", function() {
         let code = this.id;
         console.log(this.id);
@@ -158,6 +144,7 @@ $().ready(function() {
         let d = prompt("Please enter a direction: ", "right or down");
         drawShip(playerGrid,x,y,d,code.length);
         socket.emit('place', {
+            id: PLAYERS['you'].id,
             ship: code,
             column: x,
             row: y,
@@ -165,7 +152,19 @@ $().ready(function() {
         });
     });
 
+    // ships placed, ready to play!
+    $("#place-ships").on('click', function() {
+        socket.emit('setup');
+        $("#ship-container").show();
+        drawGrid(enemyGrid);
+    });
+
+    // users fire missiles
+
+
 });
+
+
 
 
 
@@ -178,14 +177,29 @@ function drawProfiles(userProfiles) {
 
 }
 
+const rowLabels = ['A','B','C','D','E','F','G','H','I','J'];
+const columnLabels = ['1','2','3','4','5','6','7','8','9','10'];
+
+
+
 // draws battleship grid
 function drawGrid(playerGrid) {
     let ctx = playerGrid[0].getContext('2d');
     ctx.canvas.height = HEIGHT;
     ctx.canvas.width = WIDTH;
 
-    ctx.strokeStyle="#03AFCA";
-    ctx.lineWidth=0.5;
+    ctx.strokeStyle = "#03AFCA";
+    ctx.lineWidth = 0.5;
+
+    ctx.font = "20px courier";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "hanging";
+    ctx.fillStyle = "#AEAEAE";
+    for (let i = 0; i < rowLabels.length; i++) {
+        for (let j = 0; j < columnLabels.length; j++) {
+            ctx.fillText(rowLabels[i]+columnLabels[j],(j*cellDim)+(cellDim/2),(i*cellDim)+(cellDim/2));
+        }
+    }
 
     for (let i = 0; i <= HEIGHT; i += cellDim) {
         ctx.beginPath();
